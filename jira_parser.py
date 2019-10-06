@@ -1,8 +1,6 @@
 import argparse
 from datetime import datetime
-
 from entities.jira_client import JiraClient
-jql = 'project = BERCUTQA AND component = Services_WS-227528_Upgrade  and labels in (creation)'
 
 parser = argparse.ArgumentParser()
 

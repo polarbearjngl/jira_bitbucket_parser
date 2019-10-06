@@ -1,7 +1,7 @@
 from pathlib import Path
 from jira import JIRA
 from pandas import DataFrame
-
+import os
 from entities.issues import Issues
 
 
@@ -15,20 +15,42 @@ class JiraClient(object):
         self.issues = Issues(connection=self.jira)
 
     def worklogs_to_excel(self, filename, sheet, jql, startrow=0, startcol=0):
-        columns = {'issue': [], 'summary': [], 'timespent': [], 'query': [jql]}
-        for issues_list in self.issues.issues.values():
-            for issue in issues_list:
-                columns['issue'].append(issue.issue_id)
-                columns['summary'].append(issue.summary)
-                columns['timespent'].append(str(issue.timespent))
-        columns['query'].extend([None for _ in range(startrow + len(columns['issue']) - 1)])
+        columns = {'issue': [],
+                   'summary': [],
+                   'timespent': [],
+                   'timespent by author': [],
+                   'query': [jql]}
+        columns = self.generate_table(columns=columns, startrow=startrow)
+
+        directory = str(Path(__file__).parent.parent.absolute()) + '\\reports\\'
+        filename = directory + filename + '.xlsx'
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
         df = DataFrame(data=columns)
-        filename = str(Path(__file__).parent.parent.absolute()) + '\\' + filename + '.xlsx'
         df.to_excel(excel_writer=filename, sheet_name=sheet, index=False,
                     startrow=startrow, startcol=startcol)
 
-        print('Сохраено в ' + filename)
+        print('Сохранено в ' + filename)
+
+    def generate_table(self, columns, startrow):
+        for issues_list in self.issues.all_issues.values():
+            for issue in issues_list:
+                columns['issue'].append(issue.issue_id)
+                columns['summary'].append(issue.summary)
+                columns['timespent'].append(self.sec_to_hours(s=issue.timespent.total_seconds()))
+                columns['timespent by author'].append('')
+                for key, value in issue.timespent_by_author.items():
+                    columns['timespent by author'][-1] += key + ' ' + self.sec_to_hours(s=value.total_seconds()) + '\n'
+
+        columns['query'].extend([None for _ in range(startrow + len(columns['issue']) - 1)])
+        return columns
+
+    @staticmethod
+    def sec_to_hours(s):
+        hours = str(s // 3600)[:-2]
+        mins = str((s % 3600) // 60)[:-2]
+        return "{}h {}m".format(hours, mins)
 
     def close_connection(self):
         print('Закрытие сессии Jira')
