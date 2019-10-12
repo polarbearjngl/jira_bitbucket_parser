@@ -8,7 +8,7 @@ class Issues(object):
         self.jira = connection
         self.all_issues = {}
 
-    def search_issues(self, jql, fields='issue,key,summary,subtasks,worklog'):
+    def search_issues(self, jql, fields='issue,key,summary,subtasks,worklog,assignee,status,type'):
         """Поиск задач в джира, подходящих под заданный jql запрос.
 
         Args:
@@ -71,6 +71,8 @@ class Issue(object):
         self.id = jira_issue.id
         self.issue_id = jira_issue.key
         self.summary = jira_issue.fields.summary
+        self.type = jira_issue.fields.issuetype
+        self.assignee = getattr(jira_issue.fields, 'assignee', '')
         self.worklog = getattr(jira_issue.fields, 'worklog', None)
         self.worklog_max_results = self.worklog.maxResults if self.worklog is not None else 0
         self.worklog_total = self.worklog.total if self.worklog is not None else 0

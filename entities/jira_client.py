@@ -1,7 +1,6 @@
 from pathlib import Path
 from jira import JIRA
-from pandas import DataFrame
-import os
+from entities.excel_tables import WorklogsTable
 from entities.issues import Issues
 
 
@@ -15,6 +14,10 @@ class JiraClient(object):
 
         self.issues = Issues(connection=self.jira)
 
+    def search_issues(self, jql):
+        """Поиск задач в джира, подходящих под заданный jql запрос."""
+        return self.issues.search_issues(jql=jql)
+
     def worklogs_to_excel(self, filename, sheet, jql, startrow=0, startcol=0):
         """Запись собранных ворклогов в эксель файл.
 
@@ -26,39 +29,17 @@ class JiraClient(object):
             startcol: Номер левой строки для таблицы.
 
         """
-        columns = {'issue': [],
-                   'summary': [],
-                   'timespent(min)': [],
-                   'timespent(hours)': [],
-                   'timespent(by author)': [],
-                   'query': [jql]}
-        columns = self.generate_table(columns=columns)
+        table = WorklogsTable(jira_client=self)
 
-        directory = str(Path(__file__).parent.parent.absolute()) + '\\reports\\'
-        filename = directory + filename + '.xlsx'
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        df = DataFrame(data=columns)
-        df.to_excel(excel_writer=filename, sheet_name=sheet, index=False,
-                    startrow=startrow, startcol=startcol)
-
-        print('Сохранено в ' + filename)
-
-    def generate_table(self, columns):
-        """Заполнение тбалицы с заданными колонками."""
         for issues_list in self.issues.all_issues.values():
             for issue in issues_list:
-                columns['issue'].append(issue.issue_id)
-                columns['summary'].append(issue.summary)
-                columns['timespent(min)'].append(self.sec_to_mins(s=issue.timespent.total_seconds()))
-                columns['timespent(hours)'].append(self.sec_to_hours_mins(s=issue.timespent.total_seconds()))
-                columns['timespent(by author)'].append('')
-                for key, value in issue.timespent_by_author.items():
-                    columns['timespent(by author)'][-1] += key + ' ' + str(self.sec_to_hours_mins(s=value.total_seconds())) + '\n'
+                table.insert_data_for_issue_into_table(issue=issue)
 
-        columns['query'].extend([None for _ in range(len(columns['issue']) - 1)])
-        return columns
+        table.insert_jql_into_table(jql=jql)
+
+        table.to_excel(directory=str(Path(__file__).parent.parent.absolute()) + '\\reports\\',
+                       filename=filename,
+                       startrow=startrow, startcol=startcol, sheet_name=sheet)
 
     @staticmethod
     def sec_to_hours_mins(s):

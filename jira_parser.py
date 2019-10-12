@@ -31,7 +31,7 @@ def main():
         client = JiraClient(host=args.jira,
                             login=args.login,
                             password=args.password)
-        client.issues.search_issues(jql=args.query)
+        client.search_issues(jql=args.query)
         client.issues.collect_worklogs()
         client.worklogs_to_excel(filename=args.filename,
                                  sheet=args.sheet,
