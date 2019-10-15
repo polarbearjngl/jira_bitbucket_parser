@@ -32,6 +32,7 @@ class WorklogsTable(ExcelTable):
     """Класс для создания таблицы с собранными ворклогами."""
 
     COLUMNS = ['type',
+               'components',
                'issue',
                'summary',
                'assignee',
@@ -50,6 +51,7 @@ class WorklogsTable(ExcelTable):
     def insert_data_for_issue_into_table(self, issue):
         """Запись  данных по задаче в соответствующие ячейки."""
         self.get('type').append(issue.type)
+        self.get('components').append(issue.components)
         self.get('issue').append(issue.issue_id)
         self.get('summary').append(issue.summary)
         self.get('assignee').append(issue.assignee)

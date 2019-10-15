@@ -1,6 +1,7 @@
 import argparse
 from datetime import datetime
 from entities.jira_client import JiraClient
+from traceback import print_exc
 
 parser = argparse.ArgumentParser()
 
@@ -41,11 +42,12 @@ def main():
         client.close_connection()
     except (KeyboardInterrupt, SystemExit):
         client.close_connection() if client is not None else None
-        print('Выход')
         raise
     except Exception as e:
         client.close_connection() if client is not None else None
-        print('Ошибка при выполнении')
+        print('Ошибка при выполнении\n')
+        print_exc()
+        input("\nНажмите Enter для выхода...")
         raise e
 
 

@@ -8,7 +8,7 @@ class Issues(object):
         self.jira = connection
         self.all_issues = {}
 
-    def search_issues(self, jql, fields='issue,key,summary,subtasks,worklog,assignee,status,type'):
+    def search_issues(self, jql, fields='issue,key,summary,subtasks,worklog,assignee,status,type,component'):
         """Поиск задач в джира, подходящих под заданный jql запрос.
 
         Args:
@@ -72,6 +72,7 @@ class Issue(object):
         self.issue_id = jira_issue.key
         self.summary = jira_issue.fields.summary
         self.type = jira_issue.fields.issuetype
+        self.components = getattr(jira_issue.fields, 'components', None)
         self.assignee = getattr(jira_issue.fields, 'assignee', '')
         self.worklog = getattr(jira_issue.fields, 'worklog', None)
         self.worklog_max_results = self.worklog.maxResults if self.worklog is not None else 0
@@ -82,6 +83,9 @@ class Issue(object):
 
         if getattr(jira_issue.fields, 'subtasks', None) is not None:
             self.add_subtasks(subtasks=jira_issue.fields.subtasks)
+
+        if self.components:
+            self.components = ','.join([c.name for c in self.components])
 
     @property
     def subtasks(self):
