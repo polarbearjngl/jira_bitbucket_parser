@@ -15,7 +15,7 @@ def jira_client():
 @pytest.mark.parametrize('exp_count, jql',
                          [pytest.param(8, TEST_JQL)])
 def test_jira_search_issues(jira_client, exp_count, jql):
-    issues = jira_client.issues.search_issues(jql=jql)
+    issues = jira_client.search_issues(jql=jql)
     assert len(issues) == exp_count
 
 

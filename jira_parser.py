@@ -40,6 +40,7 @@ def main():
                                  startrow=args.startrow,
                                  startcol=args.startcol)
         client.close_connection()
+        input("\nНажмите Enter для выхода...")
     except (KeyboardInterrupt, SystemExit):
         client.close_connection() if client is not None else None
         raise

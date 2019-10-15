@@ -2,6 +2,7 @@ from pathlib import Path
 from jira import JIRA
 from entities.excel_tables import WorklogsTable
 from entities.issues import Issues
+import platform
 
 
 class JiraClient(object):
@@ -16,7 +17,7 @@ class JiraClient(object):
 
     def search_issues(self, jql):
         """Поиск задач в джира, подходящих под заданный jql запрос."""
-        return self.issues.search_issues(jql=jql)
+        return self.issues.search_issues(jql=self.decode_query(query=jql))
 
     def worklogs_to_excel(self, filename, sheet, jql, startrow=0, startcol=0):
         """Запись собранных ворклогов в эксель файл.
@@ -35,7 +36,7 @@ class JiraClient(object):
             for issue in issues_list:
                 table.insert_data_for_issue_into_table(issue=issue)
 
-        table.insert_jql_into_table(jql=jql)
+        table.insert_jql_into_table(jql=self.decode_query(query=jql))
 
         table.to_excel(directory=str(Path(__file__).parent.parent.absolute()) + '\\reports\\',
                        filename=filename,
@@ -54,6 +55,21 @@ class JiraClient(object):
     @staticmethod
     def sec_to_mins(s):
         return int(str(s // 60)[:-2])
+
+    def decode_query(self, query):
+        if platform.system() == 'Windows':
+            for encode, decode in [['cp866', 'utf-8'], ['cp1251', 'utf-8'], ['cp866', 'cp1251']]:
+                decoded_query = self.try_decode(string=query, encode=encode, decode=decode)
+                if decoded_query is not None:
+                    return decoded_query
+        return query
+
+    @staticmethod
+    def try_decode(string, encode, decode, exceptions=(UnicodeEncodeError, UnicodeDecodeError)):
+        try:
+            return string.encode(encode).decode(decode)
+        except exceptions:
+            return None
 
     def close_connection(self):
         print('Закрытие сессии Jira')
