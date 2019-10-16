@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from jira import JIRA
 from entities.excel_tables import WorklogsTable
@@ -38,7 +39,7 @@ class JiraClient(object):
 
         table.insert_jql_into_table(jql=self.decode_query(query=jql))
 
-        table.to_excel(directory=str(Path(__file__).parent.parent.absolute()) + '\\reports\\',
+        table.to_excel(directory=str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep,
                        filename=filename,
                        startrow=startrow, startcol=startcol, sheet_name=sheet)
 

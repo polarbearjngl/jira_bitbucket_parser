@@ -40,7 +40,7 @@ class WorklogsTable(ExcelTable):
                'timespent(hours)',
                'timespent(by author)',
                'query']
-    DIR_NAME = '\\worklogs\\'
+    DIR_NAME = 'worklogs' + os.sep
 
     def __init__(self, jira_client, **kwargs):
         super().__init__(**kwargs)
