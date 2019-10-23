@@ -1,5 +1,5 @@
 **/.idea
 **/.git
-**/.xls
-**/.xlsx
+*.xls
+*.xlsx
 **/__pycache__
