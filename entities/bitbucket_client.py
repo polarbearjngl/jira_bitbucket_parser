@@ -31,6 +31,8 @@ class BitbucketClient(Bitbucket):
                                                 date_from=date_from,
                                                 date_to=date_to)
 
+        print('Собрана информация по {} Pull Requests'.format(len(self.pull_requests)))
+
         for pull_request in self.pull_requests:
             self.collect_info_by_pr_author(pull_request=pull_request)
 
