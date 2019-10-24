@@ -11,10 +11,14 @@ parser.add_argument('-p', '--password', default=None, required=True,
                     type=str, help="Пароль пользователя Bitbucket")
 parser.add_argument('-prj', '--project', default=None, required=True,
                     type=str, help="Наименование проекта Bitbucket")
-parser.add_argument('-rep', '--repository', default=None, required=True,
-                    type=str, help="Наименование репозитория Bitbucket")
-parser.add_argument('-l', '--limit', default=100, type=int,
+parser.add_argument('-rep', '--repository', default='',
+                    type=str, help="Наименование репозитория/репозиториев через запятую")
+parser.add_argument('-lim', '--limit', default=100, type=int,
                     help='Максимальное кол-во Pull-requests в ответе')
+parser.add_argument('-df', '--date_from', default=None, type=str,
+                    help='Дата в формате d.m.y от которой производится поиск ПРов')
+parser.add_argument('-dt', '--date_to', default=str(datetime.now().strftime('%d.%m.%y')), type=str,
+                    help='Дата в формате d.m.y до которой производится поиск ПРов')
 parser.add_argument('-f', '--filename', default=str(datetime.now().strftime('%d-%m %H-%M-%S')), type=str,
                     help='Наименование файла с отчетом')
 parser.add_argument('-s', '--sheet', default='sheet1', type=str,
@@ -36,11 +40,16 @@ def main():
         client = BitbucketClient(url=args.bitbucket,
                                  username=args.login,
                                  password=args.password)
-        pull_requests = client.collect_pull_requests(project=args.project,
-                                                     repository=args.repository,
-                                                     state='All',
-                                                     limit=args.limit)
-        input("\nНажмите Enter для выхода...")
+        client.collect_pull_requests(project=args.project,
+                                     repository=args.repository,
+                                     limit=args.limit,
+                                     date_from=args.date_from,
+                                     date_to=args.date_to)
+        client.count_pull_requests_faults()
+        client.pull_requests_to_excel(filename=args.filename,
+                                      sheet=args.sheet,
+                                      startrow=args.startrow,
+                                      startcol=args.startcol)
     except (KeyboardInterrupt, SystemExit):
         client.close_connection() if client is not None else None
         raise
@@ -48,7 +57,6 @@ def main():
         client.close_connection() if client is not None else None
         print('Ошибка при выполнении\n')
         print_exc()
-        input("\nНажмите Enter для выхода...")
         raise e
 
 

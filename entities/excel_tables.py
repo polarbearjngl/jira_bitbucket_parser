@@ -1,3 +1,4 @@
+import json
 import os
 from pandas import DataFrame
 
@@ -66,3 +67,33 @@ class WorklogsTable(ExcelTable):
         """Добавление текущего JQL запроса в таблицу."""
         self.get('query').append(jql)
         self.get('query').extend([None for _ in range(len(self.get('issue')) - 1)])
+
+
+class PullRequestsTable(ExcelTable):
+    COLUMNS = ['repository',
+               'author',
+               'pull requests',
+               'faults',
+               'high',
+               'medium',
+               'low',
+               'no category',
+               'by category']
+    DIR_NAME = 'pull_requests' + os.sep
+
+    def __init__(self, bitbucket_client, **kwargs):
+        super().__init__(**kwargs)
+        self.bitbucket_client = bitbucket_client
+        for key in self.COLUMNS:
+            setattr(self, key, [])
+
+    def insert_data_for_author_into_table(self, by_author):
+        self.get('repository').append(by_author.repository)
+        self.get('author').append(by_author.author)
+        self.get('pull requests').append(by_author.pr_count)
+        self.get('faults').append(by_author.faults)
+        self.get('high').append(by_author.high)
+        self.get('medium').append(by_author.medium)
+        self.get('low').append(by_author.low)
+        self.get('no category').append(by_author.no_category)
+        self.get('by category').append(json.dumps(by_author.by_severity))
