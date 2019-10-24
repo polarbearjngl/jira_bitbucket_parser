@@ -15,9 +15,9 @@ parser.add_argument('-rep', '--repository', default='',
                     type=str, help="Наименование репозитория/репозиториев через запятую")
 parser.add_argument('-lim', '--limit', default=100, type=int,
                     help='Максимальное кол-во Pull-requests в ответе')
-parser.add_argument('-df', '--date_from', default=None, type=str,
+parser.add_argument('-df', '--date_from', default='', type=str,
                     help='Дата в формате d.m.y от которой производится поиск ПРов')
-parser.add_argument('-dt', '--date_to', default=str(datetime.now().strftime('%d.%m.%y')), type=str,
+parser.add_argument('-dt', '--date_to', default='', type=str,
                     help='Дата в формате d.m.y до которой производится поиск ПРов')
 parser.add_argument('-f', '--filename', default=str(datetime.now().strftime('%d-%m %H-%M-%S')), type=str,
                     help='Наименование файла с отчетом')

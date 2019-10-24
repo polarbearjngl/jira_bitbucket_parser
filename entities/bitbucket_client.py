@@ -17,8 +17,9 @@ class BitbucketClient(Bitbucket):
         self.pull_requests_by_author = []
 
     def collect_pull_requests(self, project, repository='', limit=100, state='All', date_from=None, date_to=None):
-        date_from = date_from if date_from is None else datetime.strptime(date_from, self.DATE_FORMAT)
-        date_to = date_to if date_to is None else datetime.strptime(date_to, self.DATE_FORMAT)
+        date_from = date_from if not date_from else datetime.strptime(date_from, self.DATE_FORMAT)
+        date_to = str(datetime.now().strftime('%d.%m.%y')) if not date_to \
+            else datetime.strptime(date_to, self.DATE_FORMAT)
 
         repositories = self.get_repo_list(project=project, repository=repository)
 
