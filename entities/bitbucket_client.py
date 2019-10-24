@@ -37,7 +37,7 @@ class BitbucketClient(Bitbucket):
         return self.pull_requests
 
     def get_repo_list(self, project, repository):
-        if not repository:
+        if not repository or repository == 'all':
             repo_list = self.repo_all_list(project_key=project)
             repositories = [repo['name'] for repo in repo_list]
         else:
