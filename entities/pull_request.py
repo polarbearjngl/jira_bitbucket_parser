@@ -29,7 +29,7 @@ class PullRequest(object):
                               [act for act in self.activities if act['action'] == 'COMMENTED']])
 
     def get_tests_count(self):
-        founded_url = re.findall(self.JIRA_ISSUE_URL_PATTERN, self.description)
+        founded_url = re.findall(self.JIRA_ISSUE_URL_PATTERN, self.description) if self.description else None
         if founded_url:
             return len(founded_url)
 
