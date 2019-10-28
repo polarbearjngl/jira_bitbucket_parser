@@ -65,11 +65,14 @@ class BitbucketClient(Bitbucket):
                                                                            pull_request.repository == elem.repository])]
         if by_author:
             by_author[0].pr_count += 1
+            by_author[0].tests_count += pull_request.tests_count_in_pr
             if pull_request.comments:
                 by_author[0].comments.extend(pull_request.comments)
                 by_author[0].faults += len(pull_request.comments)
         else:
-            by_author_new = PullRequestsByAuthor(author=pull_request.author, repository=pull_request.repository)
+            by_author_new = PullRequestsByAuthor(author=pull_request.author,
+                                                 repository=pull_request.repository,
+                                                 tests_count=pull_request.tests_count_in_pr)
             by_author_new.pr_count = 1
             if pull_request.comments:
                 by_author_new.comments.extend(pull_request.comments)

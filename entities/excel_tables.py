@@ -73,6 +73,7 @@ class PullRequestsTable(ExcelTable):
     COLUMNS = ['repository',
                'author',
                'pull requests',
+               'tests count',
                'faults',
                'high',
                'medium',
@@ -91,6 +92,7 @@ class PullRequestsTable(ExcelTable):
         self.get('repository').append(by_author.repository)
         self.get('author').append(by_author.author)
         self.get('pull requests').append(by_author.pr_count)
+        self.get('tests count').append(by_author.tests_count)
         self.get('faults').append(by_author.faults)
         self.get('high').append(by_author.high)
         self.get('medium').append(by_author.medium)

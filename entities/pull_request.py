@@ -4,17 +4,22 @@ from datetime import datetime
 
 class PullRequest(object):
 
+    JIRA_ISSUE_URL_PATTERN = r'(https:|http:|www\.)\S*[jira]\S*'
+
     def __init__(self, client, project, repository, **kwargs):
         self.client = client,
         self.project = project
         self.repository = repository
         self.id = kwargs.get('id')
+        self.title = kwargs.get('title')
+        self.description = kwargs.get('description')
         self.author = kwargs.get('author').get('user').get('displayName')
         self.state = kwargs.get('state')
         self.cre_date = datetime.fromtimestamp(kwargs.get('createdDate') / 1000)
         self.activities = []
         self.comments = []
         self.get_activities_and_comments()
+        self.tests_count_in_pr = self.get_tests_count()
 
     def get_activities_and_comments(self):
         self.activities = self.client[0].get_pull_requests_activities(project=self.project,
@@ -22,6 +27,13 @@ class PullRequest(object):
                                                                       pull_request_id=self.id)
         self.comments.extend([text['comment']['text'] for text in
                               [act for act in self.activities if act['action'] == 'COMMENTED']])
+
+    def get_tests_count(self):
+        founded_url = re.findall(self.JIRA_ISSUE_URL_PATTERN, self.description)
+        if founded_url:
+            return len(founded_url)
+
+        return 0
 
 
 class PullRequestsByAuthor(object):
@@ -31,9 +43,10 @@ class PullRequestsByAuthor(object):
     MEDIUM_PATTERN = r'^m.'
     LOW_PATTERN = r'^l.'
 
-    def __init__(self, author, repository):
+    def __init__(self, author, repository, tests_count):
         self.author = author
         self.repository = repository
+        self.tests_count = tests_count
         self.pr_count = 0
         self.faults = 0
         self.high = 0
