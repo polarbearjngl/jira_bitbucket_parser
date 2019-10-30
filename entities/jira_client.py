@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 from jira import JIRA
-from entities.excel_tables import WorklogsTable
+
+from entities.excel_tables import WorklogsTable, WorklogsByAuthorTable
 from entities.issues import Issues
 import platform
 
@@ -20,28 +21,36 @@ class JiraClient(object):
         """Поиск задач в джира, подходящих под заданный jql запрос."""
         return self.issues.search_issues(jql=self.decode_query(query=jql))
 
-    def worklogs_to_excel(self, filename, sheet, jql, startrow=0, startcol=0):
+    def worklogs_to_excel(self, filename, jql, startrow=0, startcol=0):
         """Запись собранных ворклогов в эксель файл.
 
         Args:
             filename: Наименование файла с отчетом.
-            sheet: Наименование листа, в который необходимо записать отчет.
             jql: Текст запроса, для результатов которого необходимо записать ворклоги.
             startrow: Номер левого ряда для таблицы.
             startcol: Номер левой строки для таблицы.
 
         """
-        table = WorklogsTable(jira_client=self)
-
+        worklogs_table = WorklogsTable(jira_client=self)
         for issues_list in self.issues.all_issues.values():
             for issue in issues_list:
-                table.insert_data_for_issue_into_table(issue=issue)
+                worklogs_table.insert_data_for_issue_into_table(issue=issue)
+        worklogs_table.insert_jql_into_table(jql=self.decode_query(query=jql))
 
-        table.insert_jql_into_table(jql=self.decode_query(query=jql))
+        worklogs_by_author_table = WorklogsByAuthorTable(jira_client=self)
+        for info in self.issues.worklogs_by_author.by_author.values():
+            worklogs_by_author_table.insert_data_for_author_into_table(by_author=info)
 
-        table.to_excel(directory=str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep,
-                       filename=filename,
-                       startrow=startrow, startcol=startcol, sheet_name=sheet)
+        directory = str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep
+
+        worklogs_table.to_excel(directory=directory,
+                                filename=filename,
+                                startrow=startrow, startcol=startcol, sheet_name='Worklogs')
+
+        worklogs_by_author_table.to_excel(directory=directory,
+                                          filename=filename,
+                                          startrow=startrow, startcol=startcol, sheet_name='WorklogsByAuthor')
+
 
     @staticmethod
     def sec_to_hours_mins(s):

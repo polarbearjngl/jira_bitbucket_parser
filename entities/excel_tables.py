@@ -1,6 +1,7 @@
 import json
 import os
-from pandas import DataFrame
+from pandas import DataFrame, ExcelWriter
+from openpyxl import load_workbook
 
 
 class ExcelTable(dict):
@@ -21,11 +22,23 @@ class ExcelTable(dict):
         if not os.path.exists(directory):
             os.makedirs(directory)
         filename = directory + filename + self.EXTENSION
+
+        writer = None
+        try:
+            book = load_workbook(filename)
+            writer = ExcelWriter(filename, engine='openpyxl')
+            writer.book = book
+        except FileNotFoundError:
+            pass
+
         df = DataFrame(data={k: v for k, v in self.__dict__.items() if k in self.COLUMNS})
-        df.to_excel(excel_writer=filename,
+        df.to_excel(excel_writer=writer or filename,
                     sheet_name=sheet_name,
                     startrow=startrow, startcol=startcol,
                     index=False)
+        if writer:
+            writer.save()
+            writer.close()
         print('Сохранено в ' + filename)
 
 
@@ -67,6 +80,32 @@ class WorklogsTable(ExcelTable):
         """Добавление текущего JQL запроса в таблицу."""
         self.get('query').append(jql)
         self.get('query').extend([None for _ in range(len(self.get('issue')) - 1)])
+
+
+class WorklogsByAuthorTable(ExcelTable):
+    COLUMNS = ['author',
+               'issues count',
+               'timespent(min)',
+               'timespent(hours)',
+               'components',
+               'summaries',
+               'issues']
+    DIR_NAME = 'worklogs' + os.sep
+
+    def __init__(self, jira_client, **kwargs):
+        super().__init__(**kwargs)
+        self.jira_client = jira_client
+        for key in self.COLUMNS:
+            setattr(self, key, [])
+
+    def insert_data_for_author_into_table(self, by_author):
+        self.get('author').append(by_author.author)
+        self.get('issues count').append(len(by_author.issue_ids))
+        self.get('timespent(min)').append(by_author.timespent_min)
+        self.get('timespent(hours)').append(by_author.timespent_hours)
+        self.get('components').append(by_author.components)
+        self.get('summaries').append(by_author.summaries)
+        self.get('issues').append(by_author.issues)
 
 
 class PullRequestsTable(ExcelTable):
