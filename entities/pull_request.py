@@ -22,6 +22,7 @@ class PullRequest(object):
         self.tests_count_in_pr = self.get_tests_count()
 
     def get_activities_and_comments(self):
+        """сбор комментов и severity"""
         self.activities = self.client[0].get_pull_requests_activities(project=self.project,
                                                                       repository=self.repository,
                                                                       pull_request_id=self.id)
@@ -52,8 +53,8 @@ class PullRequestsByAuthor(object):
         self.high = 0
         self.medium = 0
         self.low = 0
-        self.no_category = 0
-        self.by_severity = {}
+        self.hr = self.hs = self.hl = self.hx = self.hc = self.mr = self.ms = self.ml = 0
+        self.mx = self.mc = self.lr = self.ls = self.ll = self.lx = self.lc = self.no_category = 0
         self.founded_severities = []
         self.comments = []
 
@@ -77,10 +78,5 @@ class PullRequestsByAuthor(object):
                     self.medium += 1
                 if severity and pattern == self.LOW_PATTERN:
                     self.low += 1
-                if severity:
-                    faults_severity = self.by_severity.get(severity[0])
-                    if faults_severity:
-                        self.by_severity[severity[0]] += 1
-                    else:
-                        self.by_severity.update({severity[0]: 1})
-                    break
+                for item in severity:
+                    setattr(self, item, getattr(self, item) + 1)

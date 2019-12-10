@@ -1,5 +1,5 @@
-import json
 import os
+
 from pandas import DataFrame, ExcelWriter
 from openpyxl import load_workbook
 
@@ -118,7 +118,22 @@ class PullRequestsTable(ExcelTable):
                'medium',
                'low',
                'no category',
-               'by category']
+               'high readability',
+               'high structural',
+               'high logical',
+               'high code complexity',
+               'high code issue',
+               'medium readability',
+               'medium structural',
+               'medium logical',
+               'medium code complexity',
+               'medium code issue',
+               'low readability',
+               'low structural',
+               'low logical',
+               'low code complexity',
+               'low code issue']
+
     DIR_NAME = 'pull_requests' + os.sep
 
     def __init__(self, bitbucket_client, **kwargs):
@@ -137,4 +152,18 @@ class PullRequestsTable(ExcelTable):
         self.get('medium').append(by_author.medium)
         self.get('low').append(by_author.low)
         self.get('no category').append(by_author.no_category)
-        self.get('by category').append(json.dumps(by_author.by_severity))
+        self.get('high readability').append(by_author.hr)
+        self.get('high structural').append(by_author.hs)
+        self.get('high logical').append(by_author.hl)
+        self.get('high code complexity').append(by_author.hx)
+        self.get('high code issue').append(by_author.hc)
+        self.get('medium readability').append(by_author.mr)
+        self.get('medium structural').append(by_author.ms)
+        self.get('medium logical').append(by_author.ml)
+        self.get('medium code complexity').append(by_author.mx)
+        self.get('medium code issue').append(by_author.mc)
+        self.get('low readability').append(by_author.lr)
+        self.get('low structural').append(by_author.ls)
+        self.get('low logical').append(by_author.ll)
+        self.get('low code complexity').append(by_author.lx)
+        self.get('low code issue').append(by_author.lc)
