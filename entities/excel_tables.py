@@ -1,6 +1,7 @@
-import json
 import os
-from pandas import DataFrame
+
+from pandas import DataFrame, ExcelWriter
+from openpyxl import load_workbook
 
 
 class ExcelTable(dict):
@@ -21,11 +22,23 @@ class ExcelTable(dict):
         if not os.path.exists(directory):
             os.makedirs(directory)
         filename = directory + filename + self.EXTENSION
+
+        writer = None
+        try:
+            book = load_workbook(filename)
+            writer = ExcelWriter(filename, engine='openpyxl')
+            writer.book = book
+        except FileNotFoundError:
+            pass
+
         df = DataFrame(data={k: v for k, v in self.__dict__.items() if k in self.COLUMNS})
-        df.to_excel(excel_writer=filename,
+        df.to_excel(excel_writer=writer or filename,
                     sheet_name=sheet_name,
                     startrow=startrow, startcol=startcol,
                     index=False)
+        if writer:
+            writer.save()
+            writer.close()
         print('Сохранено в ' + filename)
 
 
@@ -69,6 +82,32 @@ class WorklogsTable(ExcelTable):
         self.get('query').extend([None for _ in range(len(self.get('issue')) - 1)])
 
 
+class WorklogsByAuthorTable(ExcelTable):
+    COLUMNS = ['author',
+               'issues count',
+               'timespent(min)',
+               'timespent(hours)',
+               'components',
+               'summaries',
+               'issues']
+    DIR_NAME = 'worklogs' + os.sep
+
+    def __init__(self, jira_client, **kwargs):
+        super().__init__(**kwargs)
+        self.jira_client = jira_client
+        for key in self.COLUMNS:
+            setattr(self, key, [])
+
+    def insert_data_for_author_into_table(self, by_author):
+        self.get('author').append(by_author.author)
+        self.get('issues count').append(len(by_author.issue_ids))
+        self.get('timespent(min)').append(by_author.timespent_min)
+        self.get('timespent(hours)').append(by_author.timespent_hours)
+        self.get('components').append(by_author.components)
+        self.get('summaries').append(by_author.summaries)
+        self.get('issues').append(by_author.issues)
+
+
 class PullRequestsTable(ExcelTable):
     COLUMNS = ['repository',
                'author',
@@ -79,7 +118,22 @@ class PullRequestsTable(ExcelTable):
                'medium',
                'low',
                'no category',
-               'by category']
+               'high readability',
+               'high structural',
+               'high logical',
+               'high code complexity',
+               'high code issue',
+               'medium readability',
+               'medium structural',
+               'medium logical',
+               'medium code complexity',
+               'medium code issue',
+               'low readability',
+               'low structural',
+               'low logical',
+               'low code complexity',
+               'low code issue']
+
     DIR_NAME = 'pull_requests' + os.sep
 
     def __init__(self, bitbucket_client, **kwargs):
@@ -98,4 +152,18 @@ class PullRequestsTable(ExcelTable):
         self.get('medium').append(by_author.medium)
         self.get('low').append(by_author.low)
         self.get('no category').append(by_author.no_category)
-        self.get('by category').append(json.dumps(by_author.by_severity))
+        self.get('high readability').append(by_author.hr)
+        self.get('high structural').append(by_author.hs)
+        self.get('high logical').append(by_author.hl)
+        self.get('high code complexity').append(by_author.hx)
+        self.get('high code issue').append(by_author.hc)
+        self.get('medium readability').append(by_author.mr)
+        self.get('medium structural').append(by_author.ms)
+        self.get('medium logical').append(by_author.ml)
+        self.get('medium code complexity').append(by_author.mx)
+        self.get('medium code issue').append(by_author.mc)
+        self.get('low readability').append(by_author.lr)
+        self.get('low structural').append(by_author.ls)
+        self.get('low logical').append(by_author.ll)
+        self.get('low code complexity').append(by_author.lx)
+        self.get('low code issue').append(by_author.lc)

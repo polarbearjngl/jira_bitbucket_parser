@@ -7,6 +7,7 @@ class Issues(object):
     def __init__(self, connection):
         self.jira = connection
         self.all_issues = {}
+        self.worklogs_by_author = WorklogsByAuthor(parent=self)
 
     def search_issues(self, jql, fields='issue,key,summary,subtasks,worklog,assignee,status,type,component'):
         """Поиск задач в джира, подходящих под заданный jql запрос.
@@ -49,11 +50,15 @@ class Issues(object):
                         task_worklogs = task.worklog.worklogs
                     task.calc_timespent(worklogs=task_worklogs)
                     task.calc_timespent_by_author(worklogs=task_worklogs)
+                    self.worklogs_by_author.update_worklogs_for_author(worklogs=task_worklogs)
+                    self.worklogs_by_author.update_issues_for_author(issue=task)
                 # Для каждой подзадачи вызываем запрос для получения ворклогов
                 for subtask in task.subtasks:
                     subtask_worklogs = self.jira.worklogs(issue=subtask.id)
                     subtask.calc_timespent(worklogs=subtask_worklogs)
                     task.calc_timespent_by_author(worklogs=subtask_worklogs)
+                    self.worklogs_by_author.update_worklogs_for_author(worklogs=subtask_worklogs)
+                    self.worklogs_by_author.update_issues_for_author(issue=subtask)
         print('Закончен сбор ворклогов')
 
 
@@ -110,3 +115,59 @@ class Issue(object):
                 self.timespent_by_author[w.author.name] = timedelta(seconds=w.timeSpentSeconds)
             else:
                 self.timespent_by_author[w.author.name] += timedelta(seconds=w.timeSpentSeconds)
+
+
+class WorklogsByAuthor(object):
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.by_author = {}
+
+    def update_worklogs_for_author(self, worklogs):
+        for w in worklogs:
+            if self.by_author.get(w.author.name) is None:
+                self.by_author[w.author.name] = WorklogByAuthor(author=w.author.name)
+
+            self.by_author[w.author.name].update_timespent(w.timeSpentSeconds)
+            if w.issueId not in self.by_author[w.author.name].issue_ids:
+                self.by_author[w.author.name].issue_ids.append(w.issueId)
+
+    def update_issues_for_author(self, issue):
+        for by_author in self.by_author.values():
+            if issue.id in by_author.issue_ids and issue.issue_id not in by_author.issues:
+                by_author.summaries = by_author.summaries + issue.summary + '\n'
+                by_author.issues = by_author.issues + issue.issue_id + '\n'
+                if issue.components and issue.components not in by_author.components:
+                    by_author.components = by_author.components + issue.components + '\n'
+
+
+class WorklogByAuthor(object):
+
+    def __init__(self, author):
+        self.author = author
+        self.timespent_sec = 0
+        self.timespent_min = None
+        self.timespent_hours = None
+        self.issue_ids = []
+        self.components = ''
+        self.summaries = ''
+        self.issues = ''
+
+    def update_timespent(self, seconds):
+        self.timespent_sec += seconds
+        self.timespent_hours = self.sec_to_hours_mins(s=self.timespent_sec)
+        self.timespent_min = self.sec_to_mins(s=self.timespent_sec)
+
+    @staticmethod
+    def sec_to_hours_mins(s):
+        hours = int(s // 3600)
+        mins = (s % 3600) // 60
+        if mins == 0:
+            return hours
+        else:
+            mins = str(mins / 60)[2:]
+            return "{},{}".format(hours, mins)
+
+    @staticmethod
+    def sec_to_mins(s):
+        return int(str(s // 60))

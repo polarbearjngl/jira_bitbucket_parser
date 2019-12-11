@@ -13,8 +13,6 @@ parser.add_argument('-q', '--query', default=None, type=str, required=True,
                     help='Строка запроса в кавычках "" для получения необходимого списка задач')
 parser.add_argument('-f', '--filename', default=str(datetime.now().strftime('%d-%m %H-%M-%S')), type=str,
                     help='Наименование файла с отчетом')
-parser.add_argument('-s', '--sheet', default='sheet1', type=str,
-                    help='Наименование листа')
 parser.add_argument('-sr', '--startrow', default=0, type=int,
                     help='Номер начального столбца')
 parser.add_argument('-sc', '--startcol', default=0, type=int,
@@ -35,7 +33,6 @@ def main():
         client.search_issues(jql=args.query)
         client.issues.collect_worklogs()
         client.worklogs_to_excel(filename=args.filename,
-                                 sheet=args.sheet,
                                  jql=args.query,
                                  startrow=args.startrow,
                                  startcol=args.startcol)
