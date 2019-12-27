@@ -49,10 +49,10 @@ class WorklogsTable(ExcelTable):
                'components',
                'issue',
                'summary',
-               'assignee',
                'timespent(min)',
                'timespent(hours)',
                'timespent(by author)',
+               'assignee',
                'query']
     DIR_NAME = 'worklogs' + os.sep
 
@@ -82,11 +82,44 @@ class WorklogsTable(ExcelTable):
         self.get('query').extend([None for _ in range(len(self.get('issue')) - 1)])
 
 
+class WorklogsByIssueForAuthorTable(ExcelTable):
+    """Класс для создания таблицы с собранными ворклогами по каждой задаче отдельно."""
+
+    COLUMNS = ['type',
+               'components',
+               'issue',
+               'summary',
+               'author',
+               'timespent(min)',
+               'timespent(hours)',
+               'assignee']
+    DIR_NAME = 'worklogs' + os.sep
+
+    def __init__(self, jira_client, **kwargs):
+        super().__init__(**kwargs)
+        self.jira_client = jira_client
+        for key in self.COLUMNS:
+            setattr(self, key, [])
+
+    def insert_data_for_issue_into_table(self, issue):
+        """Запись  данных по задаче в соответствующие ячейки."""
+        self.get('type').append(issue.type)
+        self.get('components').append(issue.components)
+        self.get('issue').append(issue.issue_id)
+        self.get('summary').append(issue.summary)
+        self.get('author').append(issue.author)
+        self.get('assignee').append(issue.assignee)
+        self.get('timespent(min)').append(issue.timespent_min)
+        self.get('timespent(hours)').append(issue.timespent_hours)
+
+
 class WorklogsByAuthorTable(ExcelTable):
     COLUMNS = ['author',
                'issues count',
                'timespent(min)',
                'timespent(hours)',
+               'average(min)',
+               'average(hours)',
                'components',
                'summaries',
                'issues']
@@ -103,6 +136,13 @@ class WorklogsByAuthorTable(ExcelTable):
         self.get('issues count').append(len(by_author.issue_ids))
         self.get('timespent(min)').append(by_author.timespent_min)
         self.get('timespent(hours)').append(by_author.timespent_hours)
+        if len(by_author.issue_ids) > 0:
+            average_min = float('{0:.2f}'.format(by_author.timespent_min / len(by_author.issue_ids)))
+            average_hours = float('{0:.2f}'.format(by_author.timespent_hours / len(by_author.issue_ids)))
+        else:
+            average_min = average_hours = 0
+        self.get('average(min)').append(average_min)
+        self.get('average(hours)').append(average_hours)
         self.get('components').append(by_author.components)
         self.get('summaries').append(by_author.summaries)
         self.get('issues').append(by_author.issues)

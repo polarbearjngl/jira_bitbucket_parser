@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from jira import JIRA
 
-from entities.excel_tables import WorklogsTable, WorklogsByAuthorTable
+from entities.excel_tables import WorklogsTable, WorklogsByAuthorTable, WorklogsByIssueForAuthorTable
 from entities.issues import Issues
 import platform
 
@@ -41,11 +41,20 @@ class JiraClient(object):
         for info in self.issues.worklogs_by_author.by_author.values():
             worklogs_by_author_table.insert_data_for_author_into_table(by_author=info)
 
+        worklogs_by_issue_for_author_table = WorklogsByIssueForAuthorTable(jira_client=self)
+        for by_author in self.issues.worklogs_by_author.by_author.values():
+            for by_issue in by_author.worklogs_by_issue.values():
+                worklogs_by_issue_for_author_table.insert_data_for_issue_into_table(issue=by_issue)
+
         directory = str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep
 
         worklogs_table.to_excel(directory=directory,
                                 filename=filename,
                                 startrow=startrow, startcol=startcol, sheet_name='Worklogs')
+
+        worklogs_by_issue_for_author_table.to_excel(directory=directory,
+                                                    filename=filename,
+                                                    startrow=startrow, startcol=startcol, sheet_name='WorklogsByIssue')
 
         worklogs_by_author_table.to_excel(directory=directory,
                                           filename=filename,
@@ -60,7 +69,7 @@ class JiraClient(object):
             return hours
         else:
             mins = str(mins / 60)[2:]
-            return "{},{}".format(hours, mins)
+            return float("{}.{}".format(hours, mins))
 
     @staticmethod
     def sec_to_mins(s):

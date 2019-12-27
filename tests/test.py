@@ -31,7 +31,7 @@ def test_jira_search_issues(jira_client, exp_count, jql):
 
 
 @pytest.mark.parametrize('filename, jql, startrow, startcol',
-                         [pytest.param('test_filename', TEST_JQL, 0, 0)])
+                         [pytest.param(str(datetime.now().strftime('%d-%m %H-%M-%S')), TEST_JQL, 0, 0)])
 def test_jira_worklogs_to_excel(jira_client, filename, jql, startrow, startcol):
     jira_client.search_issues(jql=jql)
     jira_client.issues.collect_worklogs()
