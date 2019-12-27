@@ -50,14 +50,14 @@ class Issues(object):
                         task_worklogs = task.worklog.worklogs
                     task.calc_timespent(worklogs=task_worklogs)
                     task.calc_timespent_by_author(worklogs=task_worklogs)
-                    self.worklogs_by_author.update_worklogs_for_author(worklogs=task_worklogs)
+                    self.worklogs_by_author.update_worklogs_for_author(worklogs=task_worklogs, issue=task)
                     self.worklogs_by_author.update_issues_for_author(issue=task)
                 # Для каждой подзадачи вызываем запрос для получения ворклогов
                 for subtask in task.subtasks:
                     subtask_worklogs = self.jira.worklogs(issue=subtask.id)
                     subtask.calc_timespent(worklogs=subtask_worklogs)
                     task.calc_timespent_by_author(worklogs=subtask_worklogs)
-                    self.worklogs_by_author.update_worklogs_for_author(worklogs=subtask_worklogs)
+                    self.worklogs_by_author.update_worklogs_for_author(worklogs=subtask_worklogs, issue=subtask)
                     self.worklogs_by_author.update_issues_for_author(issue=subtask)
         print('Закончен сбор ворклогов')
 
@@ -124,7 +124,7 @@ class WorklogsByAuthor(object):
         self.parent = parent
         self.by_author = {}
 
-    def update_worklogs_for_author(self, worklogs):
+    def update_worklogs_for_author(self, worklogs, issue):
         """Обработать ворклог и записать информацию по автору в соответствующую строку таблицы.
 
         Args:
@@ -136,6 +136,7 @@ class WorklogsByAuthor(object):
                 self.by_author[w.author.name] = WorklogByAuthor(author=w.author.name)
 
             self.by_author[w.author.name].update_timespent(w.timeSpentSeconds)
+            self.by_author[w.author.name].update_worklogs_by_issue(seconds=w.timeSpentSeconds, issue=issue)
             if w.issueId not in self.by_author[w.author.name].issue_ids:
                 self.by_author[w.author.name].issue_ids.append(w.issueId)
 
@@ -155,23 +156,12 @@ class WorklogsByAuthor(object):
                     by_author.components = by_author.components + issue.components + '\n'
 
 
-class WorklogByAuthor(object):
-    """Информация по ворклогам для автора."""
+class WorklogBy(object):
 
-    def __init__(self, author):
-        """Создание новой строки для автора ворклога по его имени
-
-        Args:
-            author: Имя автора ворклога.
-        """
-        self.author = author
+    def __init__(self):
         self.timespent_sec = 0
         self.timespent_min = None
         self.timespent_hours = None
-        self.issue_ids = []
-        self.components = ''
-        self.summaries = ''
-        self.issues = ''
 
     def update_timespent(self, seconds):
         """Обновить информацию о времени, которое залогано автором.
@@ -196,3 +186,39 @@ class WorklogByAuthor(object):
     @staticmethod
     def sec_to_mins(s):
         return int(str(s // 60))
+
+
+class WorklogByAuthor(WorklogBy):
+    """Информация по ворклогам для автора."""
+
+    def __init__(self, author):
+        """Создание новой строки для автора ворклога по его имени
+
+        Args:
+            author: Имя автора ворклога.
+        """
+        super().__init__()
+        self.author = author
+        self.issue_ids = []
+        self.components = ''
+        self.summaries = ''
+        self.issues = ''
+        self.worklogs_by_issue = {}
+
+    def update_worklogs_by_issue(self, issue, seconds):
+        if self.worklogs_by_issue.get(issue) is None:
+            self.worklogs_by_issue.update({issue: WorklogByIssueForAuthor(issue=issue, author=self.author)})
+
+        self.worklogs_by_issue[issue].update_timespent(seconds=seconds)
+
+
+class WorklogByIssueForAuthor(WorklogBy):
+
+    def __init__(self, issue, author):
+        super().__init__()
+        self.author = author
+        self.issue_id = issue.issue_id
+        self.summary = issue.summary
+        self.type = issue.type
+        self.components = issue.components
+        self.assignee = issue.assignee
