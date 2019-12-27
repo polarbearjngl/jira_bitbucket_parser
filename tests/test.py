@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 
 from entities.bitbucket_client import BitbucketClient
@@ -38,7 +40,7 @@ def test_jira_worklogs_to_excel(jira_client, filename, jql, startrow, startcol):
 
 
 @pytest.mark.parametrize('filename, sheet_name, startrow, startcol',
-                         [pytest.param('test_filename', 'test_sheet_name', 0, 0)])
+                         [pytest.param(str(datetime.now().strftime('%d-%m %H-%M-%S')), 'test_sheet_name', 0, 0)])
 def test_bitbucket_get_pr(bitbucket_client, filename, sheet_name, startrow, startcol):
     bitbucket_client.collect_pull_requests(project='', repository='',
                                            date_from='01.10.19', date_to='31.10.19')
