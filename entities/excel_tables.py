@@ -49,10 +49,10 @@ class WorklogsTable(ExcelTable):
                'components',
                'issue',
                'summary',
-               'assignee',
                'timespent(min)',
                'timespent(hours)',
                'timespent(by author)',
+               'assignee',
                'query']
     DIR_NAME = 'worklogs' + os.sep
 

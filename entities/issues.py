@@ -75,7 +75,7 @@ class Issue(object):
         self._parent = parent
         self.id = jira_issue.id
         self.issue_id = jira_issue.key
-        self.summary = jira_issue.fields.summary
+        self.summary = jira_issue.fields.summary.lstrip().rstrip()
         self.type = jira_issue.fields.issuetype
         self.components = getattr(jira_issue.fields, 'components', None)
         self.assignee = getattr(jira_issue.fields, 'assignee', '')
@@ -118,12 +118,19 @@ class Issue(object):
 
 
 class WorklogsByAuthor(object):
+    """Класс для работы со списком ворклогов по всем авторам."""
 
     def __init__(self, parent):
         self.parent = parent
         self.by_author = {}
 
     def update_worklogs_for_author(self, worklogs):
+        """Обработать ворклог и записать информацию по автору в соответствующую строку таблицы.
+
+        Args:
+            worklogs: Информация по ворклогам из задачи или подзадачи.
+
+        """
         for w in worklogs:
             if self.by_author.get(w.author.name) is None:
                 self.by_author[w.author.name] = WorklogByAuthor(author=w.author.name)
@@ -133,6 +140,13 @@ class WorklogsByAuthor(object):
                 self.by_author[w.author.name].issue_ids.append(w.issueId)
 
     def update_issues_for_author(self, issue):
+        """Обработать задачу и добавить информацию о ней в соответсвующую строку таблицы для автора ворклога,
+           если он раотал над ней.
+
+        Args:
+            issue: Информация о задаче.
+
+        """
         for by_author in self.by_author.values():
             if issue.id in by_author.issue_ids and issue.issue_id not in by_author.issues:
                 by_author.summaries = by_author.summaries + issue.summary + '\n'
@@ -142,8 +156,14 @@ class WorklogsByAuthor(object):
 
 
 class WorklogByAuthor(object):
+    """Информация по ворклогам для автора."""
 
     def __init__(self, author):
+        """Создание новой строки для автора ворклога по его имени
+
+        Args:
+            author: Имя автора ворклога.
+        """
         self.author = author
         self.timespent_sec = 0
         self.timespent_min = None
@@ -154,6 +174,11 @@ class WorklogByAuthor(object):
         self.issues = ''
 
     def update_timespent(self, seconds):
+        """Обновить информацию о времени, которое залогано автором.
+
+        Args:
+            seconds: Количество секунд, которое будет добавлено.
+        """
         self.timespent_sec += seconds
         self.timespent_hours = self.sec_to_hours_mins(s=self.timespent_sec)
         self.timespent_min = self.sec_to_mins(s=self.timespent_sec)
@@ -166,7 +191,7 @@ class WorklogByAuthor(object):
             return hours
         else:
             mins = str(mins / 60)[2:]
-            return "{},{}".format(hours, mins)
+            return float("{}.{}".format(hours, mins))
 
     @staticmethod
     def sec_to_mins(s):

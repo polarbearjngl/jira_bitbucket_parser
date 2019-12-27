@@ -60,7 +60,7 @@ class JiraClient(object):
             return hours
         else:
             mins = str(mins / 60)[2:]
-            return "{},{}".format(hours, mins)
+            return float("{}.{}".format(hours, mins))
 
     @staticmethod
     def sec_to_mins(s):
