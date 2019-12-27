@@ -87,6 +87,8 @@ class WorklogsByAuthorTable(ExcelTable):
                'issues count',
                'timespent(min)',
                'timespent(hours)',
+               'average(min)',
+               'average(hours)',
                'components',
                'summaries',
                'issues']
@@ -103,6 +105,13 @@ class WorklogsByAuthorTable(ExcelTable):
         self.get('issues count').append(len(by_author.issue_ids))
         self.get('timespent(min)').append(by_author.timespent_min)
         self.get('timespent(hours)').append(by_author.timespent_hours)
+        if len(by_author.issue_ids) > 0:
+            average_min = float('{0:.2f}'.format(by_author.timespent_min / len(by_author.issue_ids)))
+            average_hours = float('{0:.2f}'.format(by_author.timespent_hours / len(by_author.issue_ids)))
+        else:
+            average_min = average_hours = 0
+        self.get('average(min)').append(average_min)
+        self.get('average(hours)').append(average_hours)
         self.get('components').append(by_author.components)
         self.get('summaries').append(by_author.summaries)
         self.get('issues').append(by_author.issues)
