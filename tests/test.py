@@ -17,8 +17,9 @@ def jira_client():
 
 
 @pytest.fixture(scope='session')
-def bitbucket_client():
-    client = BitbucketClient(url='', username='', password='')
+def bitbucket_client(jira_client):
+    client = BitbucketClient(url='', username='', password='',
+                             jira_client=jira_client)
     yield client
     client.close_connection()
 

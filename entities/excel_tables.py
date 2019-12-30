@@ -39,7 +39,7 @@ class ExcelTable(dict):
         if writer:
             writer.save()
             writer.close()
-        print('Сохранено в ' + filename)
+        print('Сохранено в ' + filename + ' на лист ' + sheet_name)
 
 
 class WorklogsTable(ExcelTable):
@@ -150,6 +150,7 @@ class WorklogsByAuthorTable(ExcelTable):
 
 class PullRequestsTable(ExcelTable):
     COLUMNS = ['repository',
+               'component',
                'author',
                'pull requests',
                'tests count',
@@ -184,6 +185,7 @@ class PullRequestsTable(ExcelTable):
 
     def insert_data_for_author_into_table(self, by_author):
         self.get('repository').append(by_author.repository)
+        self.get('component').append(by_author.component)
         self.get('author').append(by_author.author)
         self.get('pull requests').append(by_author.pr_count)
         self.get('tests count').append(by_author.tests_count)
