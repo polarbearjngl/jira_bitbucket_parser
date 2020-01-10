@@ -1,3 +1,6 @@
+import re
+from datetime import datetime
+
 from entities.jira.issue import Issue
 from entities.jira.worklogs_by_author import WorklogsByAuthor
 
@@ -29,8 +32,13 @@ class Issues(object):
         print('По данному запросу найдено %s задач' % len(self.all_issues[jql]))
         return self.all_issues[jql]
 
-    def collect_worklogs(self):
-        """Вызов сбора ворклогов для задач, найденных в результате поиска."""
+    def collect_worklogs(self, date_from, date_to):
+        """Вызов сбора ворклогов для задач, найденных в результате поиска.
+
+        Args:
+            date_from: Дата от которой производится поиск ворклогов.
+            date_to: Дата до которой производится поиск ворклогов.
+        """
         sub_tasks_count, tasks_count = 0, 0
         for issues_list in self.all_issues.values():
             for task in issues_list:
@@ -38,7 +46,8 @@ class Issues(object):
                 for _ in task.subtasks:
                     sub_tasks_count += 1
 
-        print('Начат сбор ворклогов для %s подзадач и %s задач' % (sub_tasks_count, tasks_count))
+        print('Начат сбор ворклогов от %s до %s для %s подзадач и %s задач' % (date_from, date_to,
+                                                                               sub_tasks_count, tasks_count))
 
         for issues_list in self.all_issues.values():
             for task in issues_list:
@@ -49,6 +58,9 @@ class Issues(object):
                         task_worklogs = self.jira.worklogs(issue=task.id)
                     else:
                         task_worklogs = task.worklog.worklogs
+                    # брать только ворклоги, которые входят в заданный интервал дат
+                    task_worklogs = [t_w for t_w in task_worklogs
+                                     if self.check_worklog_date(worklog=t_w, date_from=date_from, date_to=date_to)]
                     task.calc_timespent(worklogs=task_worklogs)
                     task.calc_timespent_by_author(worklogs=task_worklogs)
                     self.worklogs_by_author.update_worklogs_for_author(worklogs=task_worklogs, issue=task)
@@ -56,8 +68,26 @@ class Issues(object):
                 # Для каждой подзадачи вызываем запрос для получения ворклогов
                 for subtask in task.subtasks:
                     subtask_worklogs = self.jira.worklogs(issue=subtask.id)
+                    # брать только ворклоги, которые входят в заданный интервал дат
+                    subtask_worklogs = [st_w for st_w in subtask_worklogs
+                                        if self.check_worklog_date(worklog=st_w, date_from=date_from, date_to=date_to)]
                     subtask.calc_timespent(worklogs=subtask_worklogs)
                     task.calc_timespent_by_author(worklogs=subtask_worklogs)
                     self.worklogs_by_author.update_worklogs_for_author(worklogs=subtask_worklogs, issue=subtask)
                     self.worklogs_by_author.update_issues_for_author(issue=subtask)
         print('Закончен сбор ворклогов')
+
+    @staticmethod
+    def check_worklog_date(worklog, date_from, date_to):
+        """Проверка входит ли дата создания ворклога в заданный интервал дат.
+
+        Args:
+            worklog: Данные по ворклогу из API.
+            date_from: Дата от которой производится поиск ворклогов.
+            date_to: Дата до которой производится поиск ворклогов.
+
+        Returns: True\False.
+
+        """
+        worklog_date = datetime.strptime(re.search(r'\d+-\d+-\d+', worklog.created).group(), '%Y-%m-%d')
+        return date_from <= worklog_date <= date_to

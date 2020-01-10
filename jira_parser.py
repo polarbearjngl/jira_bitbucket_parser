@@ -13,6 +13,10 @@ parser.add_argument('-q', '--query', default=None, type=str, required=True,
                     help='Строка запроса в кавычках "" для получения необходимого списка задач')
 parser.add_argument('-f', '--filename', default=str(datetime.now().strftime('%d-%m %H-%M-%S')), type=str,
                     help='Наименование файла с отчетом')
+parser.add_argument('-df', '--date_from', default=None, type=str,
+                    help='Дата в формате d.m.y от которой производится поиск ворклогов')
+parser.add_argument('-dt', '--date_to', default=None, type=str,
+                    help='Дата в формате d.m.y до которой производится поиск ворклогов')
 parser.add_argument('-sr', '--startrow', default=0, type=int,
                     help='Номер начального столбца')
 parser.add_argument('-sc', '--startcol', default=0, type=int,
@@ -31,7 +35,10 @@ def main():
                             login=args.login,
                             password=args.password)
         client.search_issues(jql=args.query)
-        client.issues.collect_worklogs()
+        date_to = datetime.strptime(args.date_to, '%d.%m.%y') if args.date_to is not None else datetime.now()
+        date_from = datetime.strptime(args.date_from, '%d.%m.%y') \
+            if args.date_from is not None else datetime.strptime('01-01-16', '%d-%m-%y')
+        client.issues.collect_worklogs(date_from=date_from, date_to=date_to)
         client.worklogs_to_excel(filename=args.filename,
                                  jql=args.query,
                                  startrow=args.startrow,
