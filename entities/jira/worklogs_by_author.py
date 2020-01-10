@@ -20,7 +20,8 @@ class WorklogsByAuthor(object):
                 self.by_author[w.author.name] = WorklogByAuthor(author=w.author.name)
 
             self.by_author[w.author.name].update_timespent(w.timeSpentSeconds)
-            self.by_author[w.author.name].update_worklogs_by_issue(seconds=w.timeSpentSeconds, issue=issue)
+            self.by_author[w.author.name].update_worklogs_by_issue(seconds=w.timeSpentSeconds, issue=issue,
+                                                                   worklog_comments=w.comment)
             if w.issueId not in self.by_author[w.author.name].issue_ids:
                 self.by_author[w.author.name].issue_ids.append(w.issueId)
 

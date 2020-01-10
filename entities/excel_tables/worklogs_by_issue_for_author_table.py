@@ -13,6 +13,7 @@ class WorklogsByIssueForAuthorTable(ExcelTable):
                'author',
                'timespent(min)',
                'timespent(hours)',
+               'comments',
                'assignee']
     DIR_NAME = 'worklogs' + os.sep
 
@@ -30,5 +31,6 @@ class WorklogsByIssueForAuthorTable(ExcelTable):
         self.get('summary').append(issue.summary)
         self.get('author').append(issue.author)
         self.get('assignee').append(issue.assignee)
+        self.get('comments').append(issue.worklog_comments)
         self.get('timespent(min)').append(issue.timespent_min)
         self.get('timespent(hours)').append(issue.timespent_hours)

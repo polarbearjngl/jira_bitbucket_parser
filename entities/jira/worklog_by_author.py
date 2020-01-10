@@ -19,8 +19,10 @@ class WorklogByAuthor(WorklogBy):
         self.issues = ''
         self.worklogs_by_issue = {}
 
-    def update_worklogs_by_issue(self, issue, seconds):
+    def update_worklogs_by_issue(self, issue, seconds, worklog_comments):
         if self.worklogs_by_issue.get(issue) is None:
-            self.worklogs_by_issue.update({issue: WorklogByIssueForAuthor(issue=issue, author=self.author)})
+            self.worklogs_by_issue.update({issue: WorklogByIssueForAuthor(issue=issue, author=self.author,
+                                                                          worklog_comments=worklog_comments)})
 
         self.worklogs_by_issue[issue].update_timespent(seconds=seconds)
+        self.worklogs_by_issue[issue].worklog_comments += '\n' + worklog_comments
