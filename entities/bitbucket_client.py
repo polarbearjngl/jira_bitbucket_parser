@@ -4,8 +4,9 @@ from pathlib import Path
 
 from atlassian import Bitbucket
 
-from entities.excel_tables import PullRequestsTable
-from entities.pull_request import PullRequest, PullRequestsByAuthor
+from entities.bitbucket.pull_request import PullRequest
+from entities.bitbucket.pull_requests_by_author import PullRequestsByAuthor
+from entities.excel_tables.pull_requests_table import PullRequestsTable
 
 
 class BitbucketClient(Bitbucket):
