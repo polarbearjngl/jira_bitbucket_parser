@@ -2,9 +2,12 @@ import os
 from pathlib import Path
 from jira import JIRA
 
-from entities.excel_tables import WorklogsTable, WorklogsByAuthorTable, WorklogsByIssueForAuthorTable
-from entities.issues import Issues
+from entities.excel_tables.worklogs_by_author_table import WorklogsByAuthorTable
+from entities.excel_tables.worklogs_by_issue_for_author_table import WorklogsByIssueForAuthorTable
+from entities.excel_tables.worklogs_table import WorklogsTable
 import platform
+
+from entities.jira.issues import Issues
 
 
 class JiraClient(object):
